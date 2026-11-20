@@ -1,0 +1,63 @@
+# Development log
+
+## 2026-11-21 — Initial release (stages 1–7)
+
+### Environment assessment
+Windows 11, Python 3.12.10, Node 24, Docker 28 (used for PostgreSQL tests), GitHub remote
+`ngolong24197/zidi-s-colormuse`. No Supabase CLI and no Supabase/Streamlit Cloud credentials
+were available to the build agent, so the cloud deployment itself is a documented manual step.
+
+### Stage 1 — Foundation
+Python project, `.streamlit/config.toml` theme (ivory/blush/dusty rose/burgundy/taupe/charcoal,
+Cormorant Garamond + Jost), config loader (secrets → env → .env), Supabase schema + storage
+policies + seed, single-owner auth (Supabase Auth, owner email check, lock-out), app shell with
+setup / sign-in / top navigation, editorial CSS and components.
+
+### Stage 2 — Color engine
+97-color library, RGB/HSL/HSV/Lab conversions, CIEDE2000 (reference-tested), harmony rules,
+six-component configurable scoring with explanations, per-category recommender with diversity,
+wardrobe matching.
+
+### Stage 3 — Wardrobe
+Repository contract with Supabase and local implementations, photo validation/compression/
+thumbnails/cropping, color extraction (OpenCV k-means in Lab, GrabCut + border-color background
+reduction), signed-URL thumbnails, full CRUD UI with search/filter/sort/pagination.
+
+### Stage 4 — Visualizer
+SVG asset generator (croquis + 33 garments), own path rasteriser (no cairo), 7 patterns,
+mannequin (SVG + PNG), flat-lay with 3 layout templates and photo/template pieces, PNG poster export.
+
+### Stage 5 — Styling
+Outfit scoring, occasion planner (beam search over owned pieces), garment-type × occasion
+suitability, Outfit Studio, Saved Looks with collections/notes, personalisation in Settings,
+backup/restore/delete-all.
+
+**Owner request added mid-build: nails and hair (color and style).** Implemented as:
+7 hairstyles (long waves, bob, ponytail, bun, curls, pixie, side braid) as back/front SVG layers,
+any hair color (natural presets + custom), a `nails` outfit slot with any polish color and
+4 shapes (almond, round, square, French) drawn on the mannequin and as a polish card in the
+flat-lay; nail-polish recommendations (Color Matcher, Studio, auto-finish in the planner),
+rule-based hairstyle suggestions, "colors that flatter your hair", hair-color note in outfit
+scores; defaults in Settings → Hair & beauty; stored in `outfits.hair_style`,
+`outfit_items (slot='nails')`, `user_preferences.hair_style/nail_shape`.
+
+### Stage 6 — Quality
+Test results at the end of this stage (run locally on Windows):
+- `pytest` → unit, contract (both backends), AppTest, backup, policy and PostgreSQL RLS suites — all passing.
+- `pytest tests/e2e` (Chromium, desktop 1366×900 + mobile 390×844) — all passing.
+Bugs found and fixed during testing: tie-breaking timestamps on Windows' coarse clock
+(strictly increasing `utcnow`), bags dropped from evening looks (bag slack in the generator),
+unrealistic picks (sneakers for office, tote for date night) → suitability table.
+
+### Stage 7 — Deployment
+Repository prepared for Streamlit Community Cloud (requirements, config, secrets example, docs).
+**Outstanding (needs the owner's accounts):** create the Supabase project, run the SQL, create the
+owner user, create the Streamlit app and paste secrets, then verify the live app
+(docs/DEPLOYMENT.md §3).
+
+### Known limitations / next ideas
+- Background reduction is heuristic, not segmentation; manual crop and color correction remain available.
+- No drag-and-drop in the studio (by design).
+- Session ends when the browser tab is reloaded (Streamlit session model) — sign in again.
+- Possible next steps: wear-tracking ("last worn"), weather-aware planning, optional AI stylist
+  behind the interface sketched in ARCHITECTURE.md.

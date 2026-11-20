@@ -18,3 +18,22 @@ Thumbs.db
 *.rar
 *.exe
 *.dll
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Streamlit secrets (never commit)
+.streamlit/secrets.toml
+
+# Local development backend data (not used in production)
+.colormuse_local/
+tests/_artifacts/
+
+# Keep the template that lists the variable names (no values)
+!.env.example

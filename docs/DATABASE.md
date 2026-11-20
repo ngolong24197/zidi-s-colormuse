@@ -1,0 +1,53 @@
+# Database
+
+Supabase PostgreSQL for records, Supabase Storage (private bucket `wardrobe`) for photos.
+Binary images are **never** stored in Postgres — only their storage paths.
+
+## Setup
+Run in the Supabase SQL editor, in this order (all are idempotent):
+1. `database/schema.sql` — tables, indexes, triggers, RLS policies, grants.
+2. `database/storage.sql` — private bucket + owner-folder storage policies.
+3. `database/seed_colors.sql` — the 97-color fashion library (generated from `src/core/color_library.py`
+   by `scripts/generate_color_seed.py`).
+
+## Tables
+| Table | Purpose | Key columns |
+|---|---|---|
+| `colors` | Reference color library (read-only for the app) | name (unique), hex, family, is_neutral |
+| `user_preferences` | One row per owner | owner_id PK, favorite/disliked colors, styles, occasions, seasons, scoring_weights jsonb, skin_tone, hair_color, hair_style, nail_shape |
+| `wardrobe_items` | Clothing | category (check), subcategory, primary_color (hex check), secondary_colors[], shade, pattern, seasons[], styles[], occasions[], favorite, image_path, thumb_path |
+| `clothing_images` | Photo metadata | wardrobe_item_id → wardrobe_items (cascade), storage_path, thumb_path, width, height, size_bytes |
+| `outfits` | Looks | name, occasion, style, season, notes, favorite, layout, skin_tone, hair_color, hair_style, score |
+| `outfit_items` | Pieces of a look (incl. `nails`) | outfit_id → outfits (cascade), wardrobe_item_id → wardrobe_items (set null), slot (check), color_hex, secondary_hex, pattern, variant, label, position; unique (outfit_id, slot) |
+| `outfit_collections` | Named groups | name |
+| `collection_outfits` | Collection ↔ look | PK (collection_id, outfit_id), both cascade |
+| `recommendation_history` | Saved matcher runs | kind, request jsonb, results jsonb |
+
+All ids are UUIDs (`gen_random_uuid()`), all private tables have `owner_id uuid default auth.uid()
+references auth.users on delete cascade`, timestamps are `timestamptz` (`updated_at` maintained
+by triggers on wardrobe_items, outfits, user_preferences).
+
+Indexes cover every query the app makes: `(owner_id, created_at desc)`, `(owner_id, category)`,
+partial favorites index, `(owner_id, updated_at desc)` on outfits, `(owner_id, outfit_id)` on
+outfit_items, history by date.
+
+Deleting a wardrobe item keeps looks intact: `outfit_items.wardrobe_item_id` becomes NULL while
+the piece's color/shape stay in the look.
+
+## Row Level Security
+RLS is enabled on every table. For each private table four policies allow
+`select/insert/update/delete` **to authenticated** only when `owner_id = auth.uid()`.
+Restrictive insert policies additionally require that child rows point to parents owned by the
+same user (outfit_items → outfits, clothing_images → wardrobe_items, collection_outfits → both).
+`colors` is readable by authenticated users and not writable. `anon` has no table privileges.
+
+Storage: objects in `wardrobe` are only accessible when the first folder of the path equals
+`auth.uid()` (`<uid>/items/<item>/<image>.jpg`, `<uid>/thumbs/...`). The bucket is private,
+limited to 5 MB and JPEG/PNG/WEBP.
+
+These rules are verified against a real PostgreSQL in `tests/test_schema_postgres.py`.
+
+## Migrations
+The schema files are idempotent (`create … if not exists`, policies dropped/recreated). For a
+future column, add an `alter table … add column if not exists …` block at the end of
+`schema.sql` and document it in DEVELOPMENT_LOG.md.

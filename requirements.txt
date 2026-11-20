@@ -1,0 +1,7 @@
+# ColorMuse runtime dependencies (Streamlit Community Cloud installs these)
+streamlit>=1.50,<2
+supabase>=2.10,<3
+pillow>=11,<14
+opencv-python-headless>=4.10
+numpy>=2.0,<3
+scikit-image>=0.24,<1

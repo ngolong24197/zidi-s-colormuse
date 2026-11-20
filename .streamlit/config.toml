@@ -1,0 +1,25 @@
+[server]
+maxUploadSize = 12          # MB; images are validated again (10 MB) and compressed before storage
+enableStaticServing = false
+runOnSave = false
+
+[browser]
+gatherUsageStats = false
+
+[client]
+toolbarMode = "minimal"
+showSidebarNavigation = false
+
+[theme]
+base = "light"
+primaryColor = "#713E4A"
+backgroundColor = "#F8F4EF"
+secondaryBackgroundColor = "#F1E4DF"
+textColor = "#302B2B"
+linkColor = "#713E4A"
+borderColor = "#E3D3CB"
+baseRadius = "14px"
+showWidgetBorder = true
+font = "Jost:https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap, sans-serif"
+headingFont = "Cormorant Garamond:https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&display=swap, serif"
+headingFontWeights = [600, 600, 600, 600, 600, 600]
