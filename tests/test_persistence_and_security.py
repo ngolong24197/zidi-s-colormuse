@@ -178,3 +178,19 @@ def test_config_problems_and_service_key_detection():
     assert load_settings({"COLORMUSE_BACKEND": "supabase"}).problems()
     assert not _settings().problems()
     assert load_settings({"COLORMUSE_BACKEND": "nope"}).problems()
+
+
+def test_dotenv_file_is_read_and_can_be_disabled(tmp_path, monkeypatch):
+    for k in ("COLORMUSE_BACKEND", "SUPABASE_URL", "SUPABASE_ANON_KEY", "OWNER_EMAIL", "COLORMUSE_LOCAL_PASSWORD"):
+        monkeypatch.delenv(k, raising=False)
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "# comment\nCOLORMUSE_BACKEND=supabase\nSUPABASE_URL=\"https://abc.supabase.co\"\n"
+        "SUPABASE_ANON_KEY='anon-key'\nOWNER_EMAIL=Zidi@Example.com\n", encoding="utf-8")
+    monkeypatch.setenv("COLORMUSE_DOTENV", str(env_file))
+    s = load_settings()
+    assert s.backend == "supabase" and s.supabase_url == "https://abc.supabase.co"
+    assert s.supabase_anon_key == "anon-key" and s.owner_email == "zidi@example.com"
+    assert not s.problems()
+    monkeypatch.setenv("COLORMUSE_DOTENV", "none")
+    assert load_settings().problems()  # nothing configured without the file

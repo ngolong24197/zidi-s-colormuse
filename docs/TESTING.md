@@ -17,6 +17,9 @@ pytest                      # everything except browser tests
 | `test_schema_postgres.py` (marker `postgres`) | runs `database/*.sql` twice on PostgreSQL 16 (Docker or `COLORMUSE_PG_DSN`) with Supabase stubs: seed, owner CRUD, cross-user read/update/delete blocked, cross-owner inserts rejected, child-parent ownership, anon denied, colors read-only, check/unique constraints, cascades/set-null, updated_at trigger, storage folder policies |
 | `tests/e2e/test_browser.py` (marker `e2e`) | Playwright/Chromium: sign-in, all 7 pages at desktop 1366×900 and mobile 390×844 without exceptions (screenshots), wrong password, mannequin SVG in DOM, add piece with photo → color extraction → save, matcher → studio → save → PNG download |
 
+The suite never reads your real `.env`: `tests/conftest.py` sets `COLORMUSE_DOTENV=none`
+(the app reads `<project>/.env` by default; `COLORMUSE_DOTENV=<path>` points it elsewhere).
+
 ## Browser tests
 ```bash
 python -m playwright install chromium-headless-shell

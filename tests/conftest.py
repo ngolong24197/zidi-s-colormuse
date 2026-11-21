@@ -16,6 +16,12 @@ from src.database.supabase_repo import SupabaseRepository  # noqa: E402
 from tests.fakes import FakeClient, FakeDB, FakeUser, seeded_colors  # noqa: E402
 
 
+@pytest.fixture(autouse=True)
+def _isolate_from_real_config(monkeypatch):
+    """Never let the developer's real .env (e.g. Supabase keys) influence tests."""
+    monkeypatch.setenv("COLORMUSE_DOTENV", "none")
+
+
 @pytest.fixture
 def fake_db():
     db = FakeDB()

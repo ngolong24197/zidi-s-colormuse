@@ -85,9 +85,25 @@ def _looks_like_service_key(key: str) -> bool:
     return False
 
 
+def dotenv_path() -> Path | None:
+    """The .env file to read: <project>/.env by default.
+
+    COLORMUSE_DOTENV overrides it with another path, or disables it with
+    "none" (the test-suite does this so a developer's real .env never leaks in).
+    """
+    override = os.environ.get("COLORMUSE_DOTENV")
+    if override is None:
+        return ROOT / ".env"
+    if override.strip().lower() in ("", "none", "0", "false"):
+        return None
+    return Path(override)
+
+
 def load_settings(env: dict[str, str] | None = None) -> Settings:
     values: dict[str, str] = {}
-    values.update(_load_dotenv(ROOT / ".env"))
+    dotenv = dotenv_path()
+    if dotenv is not None:
+        values.update(_load_dotenv(dotenv))
     values.update({k: v for k, v in os.environ.items() if k in _KEYS})
     values.update(_secrets())
     if env is not None:
