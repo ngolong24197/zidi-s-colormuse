@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 from src.core.color_convert import color_distance, normalize_hex
 from src.core.color_library import COLOR_LIBRARY, color_name, get_color
 from src.core.scoring import score_pair
+from src.i18n import _, cname, label
 from src.models.domain import HAIR_STYLES, Outfit, UserPreferences
 
 NAIL_SLOT_WEIGHT = {
@@ -77,11 +78,12 @@ def recommend_nails(
         for slot, hx in base_colors:
             if slot in ("shoes", "bag") and color_distance(hx, cand.hex) < 10:
                 score += 3
-                notes.append(f"Echoes your {slot} — a polished, intentional finish.")
+                notes.append(_("Echoes your bag — a polished, intentional finish.") if slot == "bag"
+                             else _("Echoes your shoes — a polished, intentional finish."))
                 break
         if skin_tone and cand.family in ("beige", "pink") and color_distance(skin_tone, cand.hex) < 14:
             score += 2
-            notes.append("A your-skin-but-better nude that elongates the fingers and goes with everything.")
+            notes.append(_("A your-skin-but-better nude that elongates the fingers and goes with everything."))
         results.append(NailSuggestion(cand.hex, cand.name, round(min(score, 100.0), 1), notes))
     results.sort(key=lambda r: (-r.score, r.name))
     if not diverse:
@@ -139,30 +141,30 @@ def recommend_hairstyles(outfit: Outfit, prefs: UserPreferences | None = None, l
 
     occ = outfit.occasion
     for style, val in _OCCASION_HAIR.get(occ or "", {}).items():
-        bump(style, val, f"Suits {occ}.")
+        bump(style, val, _("Suits {occasion}.", occasion=label("occasion", occ).lower()))
     top, dress, scarf = outfit.get("top"), outfit.get("dress"), outfit.get("scarf")
     hat, jewelry, outer = outfit.get("hat"), outfit.get("jewelry"), outfit.get("outerwear")
     if scarf or (top and top.variant == "sweater"):
         for s in ("bun", "ponytail", "pixie"):
-            bump(s, 0.15, "Keeps a high neckline or scarf uncluttered.")
+            bump(s, 0.15, _("Keeps a high neckline or scarf uncluttered."))
     if (top and top.variant == "blouse") or dress:
-        bump("long_waves", 0.1, "Soft waves frame a V-neckline.")
-        bump("bob", 0.08, "A bob frames the neckline.")
+        bump("long_waves", 0.1, _("Soft waves frame a V-neckline."))
+        bump("bob", 0.08, _("A bob frames the neckline."))
     if (top and top.variant == "tank") or dress:
-        bump("bun", 0.1, "An up-do shows off bare shoulders.")
+        bump("bun", 0.1, _("An up-do shows off bare shoulders."))
     if hat:
         for s in ("long_waves", "side_braid", "bob"):
-            bump(s, 0.15, "Sits comfortably under a hat.")
+            bump(s, 0.15, _("Sits comfortably under a hat."))
         bump("bun", -0.35, "")
         bump("curly", -0.1, "")
     if jewelry and jewelry.variant in ("earrings", "necklace"):
         for s in ("bun", "ponytail", "pixie"):
-            bump(s, 0.15, f"Shows off your {jewelry.variant}.")
+            bump(s, 0.15, _("Shows off your {item}.", item=label("variant", jewelry.variant).lower()))
     if outer and outer.variant == "coat":
-        bump("ponytail", 0.05, "Stays neat over a coat collar.")
+        bump("ponytail", 0.05, _("Stays neat over a coat collar."))
     if usual in scores:
-        bump(usual, 0.05, "Your everyday style.")
-    out = [HairSuggestion(s, HAIR_STYLES[s], round(min(1.0, v) * 100, 1), reasons[s] or ["A versatile choice."])
+        bump(usual, 0.05, _("Your everyday style."))
+    out = [HairSuggestion(s, label("hair", s), round(min(1.0, v) * 100, 1), reasons[s] or [_("A versatile choice.")])
            for s, v in scores.items()]
     out.sort(key=lambda h: (-h.score, h.style))
     return out[:limit]
@@ -209,10 +211,12 @@ def hair_note(outfit: Outfit) -> str:
     if not near_face:
         return ""
     d = color_distance(near_face.color_hex, outfit.hair_color)
-    hair, piece = color_name(outfit.hair_color), color_name(near_face.color_hex)
+    hair, piece = cname(outfit.hair_color).lower(), cname(near_face.color_hex)
     if d < 10:
-        return f"{piece} is very close to your {hair.lower()} hair — add earrings or a scarf to separate them."
+        return _("{piece} is very close to your {hair} hair — add earrings or a scarf to separate them.",
+                 piece=piece, hair=hair)
     bd = score_pair(outfit.hair_color, near_face.color_hex, "tops")
     if bd.components["harmony"] >= 0.8:
-        return f"{piece} near the face flatters {hair.lower()} hair ({bd.rule} pairing)."
-    return f"{piece} with {hair.lower()} hair is a bolder pairing."
+        return _("{piece} near the face flatters {hair} hair ({rule} pairing).", piece=piece, hair=hair,
+                 rule=label("rule", bd.rule).lower())
+    return _("{piece} with {hair} hair is a bolder pairing.", piece=piece, hair=hair)

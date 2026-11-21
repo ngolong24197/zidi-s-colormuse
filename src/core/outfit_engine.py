@@ -24,6 +24,7 @@ from src.core.scoring import (
     style_fit,
     weights_from,
 )
+from src.i18n import _, cname, label
 from src.models.domain import Outfit, OutfitItem, UserPreferences, WardrobeItem
 
 # Visual weight of each slot in the overall palette
@@ -106,7 +107,7 @@ def score_outfit(outfit: Outfit, ctx: OutfitContext | None = None, items_by_id: 
     pieces = outfit.items
     weights = weights_from(ctx.prefs)
     if not pieces:
-        return ScoreBreakdown({k: 0.0 for k in COMPONENT_LABELS}, weights, ["Add pieces to see a score."])
+        return ScoreBreakdown({k: 0.0 for k in COMPONENT_LABELS}, weights, [_("Add pieces to see a score.")])
 
     notes: list[str] = []
     # ---- harmony: weighted pairwise relation quality
@@ -122,30 +123,30 @@ def score_outfit(outfit: Outfit, ctx: OutfitContext | None = None, items_by_id: 
     accent_count = hue_family_count(outfit.colors)
     if accent_count > 3:
         harmony *= 0.8
-        notes.append(f"{accent_count} different accent hues — consider swapping one for a neutral.")
+        notes.append(_("{n} different accent hues — consider swapping one for a neutral.", n=accent_count))
     if rules:
         main_rule = max(rules.items(), key=lambda kv: (kv[1], kv[0]))[0]
-        notes.append(f"The palette reads as {main_rule}.")
+        notes.append(_("The palette reads as {rule}.", rule=label("rule", main_rule).lower()))
     else:
-        notes.append("An all-neutral palette — timeless and easy to accessorise.")
+        notes.append(_("An all-neutral palette — timeless and easy to accessorise."))
 
     # ---- contrast & balance between the main pieces (and shoes vs. bottom/dress)
     mains = [p for p in pieces if p.slot in MAIN_SLOTS]
     contrast_pairs: list[tuple[float, float]] = []
     for a, b in combinations(mains, 2):
-        c, _ = contrast_balance(a.color_hex, b.color_hex)
+        c, _msg = contrast_balance(a.color_hex, b.color_hex)
         contrast_pairs.append((c, 1.0))
     shoes = outfit.get("shoes")
     anchor = outfit.get("dress") or outfit.get("bottom")
     if shoes and anchor:
-        c, _ = contrast_balance(shoes.color_hex, anchor.color_hex)
+        c, _msg = contrast_balance(shoes.color_hex, anchor.color_hex)
         contrast_pairs.append((c, 0.5))
     contrast = _wmean(contrast_pairs) if contrast_pairs else 0.8
     ls = [lightness(p.color_hex) for p in mains] or [50]
     if max(ls) - min(ls) < 8 and len(mains) > 1:
-        notes.append("Tonal dressing: the main pieces share a similar depth.")
+        notes.append(_("Tonal dressing: the main pieces share a similar depth."))
     elif max(ls) - min(ls) > 55:
-        notes.append("Crisp light-and-dark contrast gives the look definition.")
+        notes.append(_("Crisp light-and-dark contrast gives the look definition."))
 
     # ---- category fit + pattern discipline + completeness
     cat_scores = [(category_fit(p.color_hex, SLOT_CATEGORY_KEY[p.slot])[0], SLOT_WEIGHT[p.slot]) for p in pieces]
@@ -153,12 +154,13 @@ def score_outfit(outfit: Outfit, ctx: OutfitContext | None = None, items_by_id: 
     patterned = [p for p in pieces if p.pattern != "solid" and p.slot in MAIN_SLOTS + ("scarf",)]
     if len(patterned) > 1:
         category *= 0.75
-        notes.append("More than one patterned piece — let a single print lead.")
+        notes.append(_("More than one patterned piece — let a single print lead."))
     elif len(patterned) == 1:
-        notes.append(f"The {patterned[0].pattern} piece is the focal point; everything else stays solid.")
+        notes.append(_("The {pattern} piece is the focal point; everything else stays solid.",
+                       pattern=label("pattern", patterned[0].pattern).lower()))
     if not outfit.is_complete():
         category *= 0.85
-        notes.append("Add a full base (top + bottom or a dress) and shoes to complete the look.")
+        notes.append(_("Add a full base (top + bottom or a dress) and shoes to complete the look."))
 
     # ---- occasion / style / preference (color fit + item tags)
     def tag_bonus(piece: OutfitItem, attr: str, value: str | None) -> float:
@@ -175,16 +177,19 @@ def score_outfit(outfit: Outfit, ctx: OutfitContext | None = None, items_by_id: 
     unsuited = [p for p in pieces if variant_suitability(p.variant, ctx.occasion) <= -0.3]
     if unsuited:
         names = ", ".join((p.label or p.variant or p.slot) for p in unsuited[:2])
-        notes.append(f"For {ctx.occasion}, consider swapping: {names}.")
+        notes.append(_("For {occasion}, consider swapping: {names}.",
+                       occasion=label("occasion", ctx.occasion).lower(), names=names))
     sty = _wmean([(min(1.0, style_fit(p.color_hex, ctx.style)[0] + tag_bonus(p, "styles", ctx.style)), SLOT_WEIGHT[p.slot]) for p in pieces])
     pref = _wmean([(preference_fit(p.color_hex, ctx.prefs)[0], SLOT_WEIGHT[p.slot]) for p in pieces])
     if ctx.prefs:
         favs = [items_by_id[p.wardrobe_item_id] for p in pieces if p.wardrobe_item_id in items_by_id and items_by_id[p.wardrobe_item_id].favorite]
         if favs:
             pref = min(1.0, pref + 0.05 * len(favs))
-            notes.append(f"Includes {len(favs)} of your favourite piece{'s' if len(favs) > 1 else ''}.")
+            notes.append(_("Includes {n} of your favourite pieces.", n=len(favs)) if len(favs) > 1
+                         else _("Includes one of your favourite pieces."))
     if ctx.occasion:
-        notes.append(f"Occasion fit for {ctx.occasion}: {int(occ * 100)}%.")
+        notes.append(_("Occasion fit for {occasion}: {pct}%.",
+                       occasion=label("occasion", ctx.occasion).lower(), pct=int(occ * 100)))
     from src.core.beauty import hair_note
 
     hn = hair_note(outfit)
@@ -192,7 +197,7 @@ def score_outfit(outfit: Outfit, ctx: OutfitContext | None = None, items_by_id: 
         notes.append(hn)
     nails = outfit.get("nails")
     if nails:
-        notes.append(f"Nails: {color_name(nails.color_hex)} polish.")
+        notes.append(_("Nails: {color} polish.", color=cname(nails.color_hex)))
 
     comps = {
         "harmony": max(0.0, min(1.0, harmony)),
@@ -330,8 +335,8 @@ def generate_outfits(
     chosen.sort(key=lambda g: (-g.objective, [i.id for i in g.items]))
     for n, g in enumerate(chosen, 1):
         anchor = g.outfit.get("dress") or g.outfit.get("top")
-        title = (ctx.occasion or "everyday").title()
-        g.outfit.name = f"{title} look {n}" + (f" — {color_name(anchor.color_hex)}" if anchor else "")
+        title = label("occasion", ctx.occasion) if ctx.occasion else _("Everyday")
+        g.outfit.name = _("{occasion} look {n}", occasion=title, n=n) + (f" — {cname(anchor.color_hex)}" if anchor else "")
         finish_beauty(g.outfit, ctx)
         g.breakdown = score_outfit(g.outfit, ctx, by_id)
         g.outfit.score = g.score
@@ -346,7 +351,7 @@ def finish_beauty(outfit: Outfit, ctx: OutfitContext) -> None:
         nails = recommend_nails(outfit, occasion=ctx.occasion, style=ctx.style, prefs=ctx.prefs, limit=1)
         if nails:
             shape = ctx.prefs.nail_shape if ctx.prefs else "almond"
-            outfit.set_item(OutfitItem(slot="nails", color_hex=nails[0].hex, variant=shape, label=f"{nails[0].name} polish"))
+            outfit.set_item(OutfitItem(slot="nails", color_hex=nails[0].hex, variant=shape, label=_("{color} polish", color=label("color", nails[0].name))))
     hair = recommend_hairstyles(outfit, ctx.prefs, limit=1)
     if hair:
         outfit.hair_style = hair[0].style

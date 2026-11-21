@@ -22,6 +22,7 @@ from src.core.color_convert import (
     normalize_hex,
 )
 from src.core.color_library import NEUTRALS, METALLICS, NamedColor, is_neutral_hex, nearest_colors, COLOR_LIBRARY
+from src.i18n import N_
 
 RULES: tuple[str, ...] = (
     "complementary",
@@ -34,13 +35,13 @@ RULES: tuple[str, ...] = (
 )
 
 RULE_DESCRIPTIONS: dict[str, str] = {
-    "complementary": "Opposite on the color wheel — maximum vibrancy; each color intensifies the other.",
-    "analogous": "Neighbours on the color wheel — calm, cohesive and effortless.",
-    "triadic": "Three colors evenly spaced around the wheel — playful and balanced.",
-    "split complementary": "The two neighbours of the complement — vivid but easier to wear than a straight complement.",
-    "monochromatic": "One hue in different depths — elongating, polished and refined.",
-    "neutral": "Grounding neutrals that let the main color lead.",
-    "contrast": "A deliberate light/dark contrast — crisp, graphic and confident.",
+    "complementary": N_("Opposite on the color wheel — maximum vibrancy; each color intensifies the other."),
+    "analogous": N_("Neighbours on the color wheel — calm, cohesive and effortless."),
+    "triadic": N_("Three colors evenly spaced around the wheel — playful and balanced."),
+    "split complementary": N_("The two neighbours of the complement — vivid but easier to wear than a straight complement."),
+    "monochromatic": N_("One hue in different depths — elongating, polished and refined."),
+    "neutral": N_("Grounding neutrals that let the main color lead."),
+    "contrast": N_("A deliberate light/dark contrast — crisp, graphic and confident."),
 }
 
 # ideal hue angle, tolerance (deg), base quality

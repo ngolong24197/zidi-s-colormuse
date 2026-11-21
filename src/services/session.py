@@ -18,6 +18,7 @@ import streamlit as st
 
 from src.config import Settings, load_settings
 from src.database.base import Repository
+from src.i18n import _
 from src.models.domain import Outfit, UserPreferences, WardrobeItem
 from src.services.auth import Session
 
@@ -32,6 +33,28 @@ def settings() -> Settings:
     if "_cm_settings" not in st.session_state:
         st.session_state["_cm_settings"] = load_settings()
     return st.session_state["_cm_settings"]
+
+
+def init_language() -> str:
+    """Pick the language for this run: session choice → ?lang= in the URL → configured default."""
+    from src import i18n
+
+    lang = st.session_state.get("lang")
+    if lang not in i18n.LANGUAGES:
+        lang = st.query_params.get("lang")
+    if lang not in i18n.LANGUAGES:
+        lang = settings().language
+    st.session_state["lang"] = i18n.set_language(lang)
+    return st.session_state["lang"]
+
+
+def set_language(code: str) -> None:
+    from src import i18n
+
+    st.session_state["lang"] = i18n.set_language(code)
+    st.query_params["lang"] = st.session_state["lang"]
+    invalidate()  # cached planner results contain localized text
+    st.session_state.pop("_studio_preview", None)
 
 
 def current() -> Session | None:
@@ -133,7 +156,7 @@ def studio_outfit() -> Outfit:
     if "studio_outfit" not in st.session_state:
         prefs = preferences()
         st.session_state["studio_outfit"] = Outfit(
-            name="New look", skin_tone=prefs.skin_tone, hair_color=prefs.hair_color, hair_style=prefs.hair_style)
+            name=_("New look"), skin_tone=prefs.skin_tone, hair_color=prefs.hair_color, hair_style=prefs.hair_style)
     return st.session_state["studio_outfit"]
 
 

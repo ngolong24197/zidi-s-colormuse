@@ -16,6 +16,7 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 
 from src.core.color_convert import rgb_to_hex
 from src.core.color_library import color_name, nearest_colors
+from src.i18n import _
 
 ALLOWED_FORMATS = {"JPEG": "image/jpeg", "PNG": "image/png", "WEBP": "image/webp"}
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
@@ -74,28 +75,27 @@ class ExtractionResult:
 def validate_image(data: bytes, filename: str | None = None) -> Image.Image:
     """Validate size, extension, real format and dimensions. Returns an opened image."""
     if not data:
-        raise ImageValidationError("The file is empty.")
+        raise ImageValidationError(_("The file is empty."))
     if len(data) > MAX_UPLOAD_BYTES:
-        raise ImageValidationError(
-            f"The photo is {len(data) / 1_048_576:.1f} MB; the limit is {MAX_UPLOAD_BYTES // 1_048_576} MB."
-        )
+        raise ImageValidationError(_("The photo is {size} MB; the limit is {limit} MB.",
+                                     size=f"{len(data) / 1_048_576:.1f}", limit=MAX_UPLOAD_BYTES // 1_048_576))
     if filename:
         ext = "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
         if ext not in ALLOWED_EXTENSIONS:
-            raise ImageValidationError("Please upload a JPG, PNG or WEBP photo.")
+            raise ImageValidationError(_("Please upload a JPG, PNG or WEBP photo."))
     try:
         probe = Image.open(io.BytesIO(data))
         fmt = probe.format
         w, h = probe.size
         probe.verify()  # detects truncated / corrupt files
     except (UnidentifiedImageError, OSError, SyntaxError, Image.DecompressionBombError) as exc:
-        raise ImageValidationError("This file is not a readable image.") from exc
+        raise ImageValidationError(_("This file is not a readable image.")) from exc
     if fmt not in ALLOWED_FORMATS:
-        raise ImageValidationError(f"Unsupported image format ({fmt}). Use JPG, PNG or WEBP.")
+        raise ImageValidationError(_("Unsupported image format ({fmt}). Use JPG, PNG or WEBP.", fmt=fmt))
     if w * h > MAX_PIXELS:
-        raise ImageValidationError("The image dimensions are too large.")
+        raise ImageValidationError(_("The image dimensions are too large."))
     if min(w, h) < MIN_SIDE:
-        raise ImageValidationError(f"The image is too small (minimum {MIN_SIDE}px per side).")
+        raise ImageValidationError(_("The image is too small (minimum {px}px per side).", px=MIN_SIDE))
     img = Image.open(io.BytesIO(data))
     img.load()
     return img
@@ -191,7 +191,7 @@ def _border_mask(rgb: np.ndarray, threshold: float = 14.0) -> np.ndarray:
     data = border.astype(np.float32)
     k = 3 if len(data) >= 30 else 1
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 20, 0.5)
-    _, labels, centers = cv2.kmeans(data, k, None, criteria, 3, cv2.KMEANS_PP_CENTERS)
+    _compactness, labels, centers = cv2.kmeans(data, k, None, criteria, 3, cv2.KMEANS_PP_CENTERS)
     counts = np.bincount(labels.ravel(), minlength=k)
     keep = np.ones((h, w), dtype=bool)
     for idx in range(k):
@@ -259,7 +259,7 @@ def extract_colors(
     k = max(1, min(k, len(pixels)))
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.3)
     cv2.setRNGSeed(7)  # deterministic clustering
-    _, labels, centers = cv2.kmeans(pixels, k, None, criteria, 4, cv2.KMEANS_PP_CENTERS)
+    _compactness, labels, centers = cv2.kmeans(pixels, k, None, criteria, 4, cv2.KMEANS_PP_CENTERS)
     counts = np.bincount(labels.ravel(), minlength=k).astype(float)
 
     # merge perceptually similar clusters (ΔE2000 < 9)
@@ -273,7 +273,7 @@ def extract_colors(
                 break
         else:
             merged.append((c, n))
-    total = sum(n for _, n in merged) or 1.0
+    total = sum(n for _center, n in merged) or 1.0
     merged.sort(key=lambda t: -t[1])
 
     colors: list[ExtractedColor] = []

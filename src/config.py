@@ -9,7 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 _KEYS = ("COLORMUSE_BACKEND", "SUPABASE_URL", "SUPABASE_ANON_KEY", "SUPABASE_BUCKET", "OWNER_EMAIL",
-         "COLORMUSE_LOCAL_PASSWORD", "COLORMUSE_LOCAL_DIR")
+         "COLORMUSE_LOCAL_PASSWORD", "COLORMUSE_LOCAL_DIR", "COLORMUSE_LANGUAGE")
 
 
 def _load_dotenv(path: Path) -> dict[str, str]:
@@ -44,6 +44,7 @@ class Settings:
     owner_email: str
     local_password: str
     local_dir: Path
+    language: str = "en"
 
     @property
     def supabase_configured(self) -> bool:
@@ -122,4 +123,6 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
         owner_email=values.get("OWNER_EMAIL", "").strip().lower(),
         local_password=values.get("COLORMUSE_LOCAL_PASSWORD", ""),
         local_dir=local_dir,
+        language=(values.get("COLORMUSE_LANGUAGE", "en").strip().lower() or "en")
+        if values.get("COLORMUSE_LANGUAGE", "en").strip().lower() in ("en", "vi") else "en",
     )

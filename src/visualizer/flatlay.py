@@ -178,7 +178,9 @@ def render_board(
 
 def render_png(outfit: Outfit, layout: str = "editorial", photo_loader=None, use_photos: bool = True) -> bytes:
     board = render_board(outfit, layout, photo_loader=photo_loader, use_photos=use_photos)
-    img = poster(outfit, board, subtitle="Flat-lay")
+    from src.i18n import _
+
+    img = poster(outfit, board, subtitle=_("Flat-lay"))
     buf = io.BytesIO()
     img.save(buf, format="PNG", optimize=True)
     return buf.getvalue()

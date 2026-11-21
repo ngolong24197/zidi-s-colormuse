@@ -21,6 +21,9 @@ polish**), plan outfits for occasions and keep a lookbook of favourite looks.
 - ⚙️ **Settings** — style & beauty preferences, favorite/avoided colors, scoring weights,
   password, backup/restore, delete all personal data.
 
+- 🌐 **English / Tiếng Việt** — switch any time in the top bar (also translates the stylist's explanations,
+  color names and PNG exports).
+
 **No AI.** Every recommendation comes from a deterministic, testable color-theory engine.
 No AI provider, API key or AI dependency is used.
 

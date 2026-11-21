@@ -12,10 +12,11 @@ from typing import Any
 import streamlit as st
 
 from src.core.color_convert import normalize_hex
-from src.core.color_library import COLOR_LIBRARY, color_name
-from src.core.scoring import COMPONENT_LABELS, ScoreBreakdown
+from src.core.color_library import COLOR_LIBRARY
+from src.core.scoring import ScoreBreakdown
 from src.database.base import BackendError, BackendUnavailable, NotAuthorized, NotFound
-from src.models.domain import CATEGORY_LABELS, OutfitItem, WardrobeItem
+from src.i18n import LANGUAGES, _, cname, get_language, label
+from src.models.domain import OutfitItem, WardrobeItem
 
 
 def esc(text: Any) -> str:
@@ -39,7 +40,7 @@ def card():
 
 def swatch_html(hex_value: str, name: str | None = None, show_hex: bool = True) -> str:
     hx = normalize_hex(hex_value)
-    nm = name or color_name(hx)
+    nm = name or cname(hx)
     return (f'<div class="cm-swatch"><div class="dot" style="background:{hx}"></div>'
             f'<div class="nm">{esc(nm)}</div>' + (f'<div class="hx">{hx}</div>' if show_hex else "") + "</div>")
 
@@ -52,9 +53,9 @@ def swatches(colors: list[tuple[str, str | None]] | list[str], show_hex: bool = 
     st.markdown(f'<div class="cm-swatch-row">{"".join(parts)}</div>', unsafe_allow_html=True)
 
 
-def chip_html(hex_value: str, label: str | None = None) -> str:
+def chip_html(hex_value: str, text: str | None = None) -> str:
     hx = normalize_hex(hex_value)
-    return f'<span class="cm-chip"><i style="background:{hx}"></i>{esc(label or color_name(hx))}</span>'
+    return f'<span class="cm-chip"><i style="background:{hx}"></i>{esc(text or cname(hx))}</span>'
 
 
 def chips(colors: list[str]) -> None:
@@ -62,7 +63,7 @@ def chips(colors: list[str]) -> None:
 
 
 def score_badge(score: float, rule: str | None = None) -> str:
-    rule_html = f'<span class="cm-rule">{esc(rule)}</span>' if rule else ""
+    rule_html = f'<span class="cm-rule">{esc(label("rule", rule))}</span>' if rule else ""
     return f'<span class="cm-score">{score:.0f}<small>/100</small></span>{rule_html}'
 
 
@@ -72,7 +73,7 @@ def breakdown_bars(bd: ScoreBreakdown) -> None:
         pct = int(round(val * 100))
         w = int(round(bd.weights.get(key, 0) * 100))
         rows.append(
-            f'<div class="cm-bar"><span>{esc(COMPONENT_LABELS[key])} · {w}%</span>'
+            f'<div class="cm-bar"><span>{esc(label("component", key))} · {w}%</span>'
             f'<div class="track"><div class="fill" style="width:{pct}%"></div></div><span>{pct}</span></div>'
         )
     st.markdown("".join(rows), unsafe_allow_html=True)
@@ -86,23 +87,74 @@ def muted(text: str) -> None:
     st.markdown(f'<div class="cm-muted">{esc(text)}</div>', unsafe_allow_html=True)
 
 
+# ---------------------------------------------------------------- language
+def language_switcher(key: str = "lang_switch") -> None:
+    """Compact English / Tiếng Việt toggle; remembered in the URL (?lang=vi) for bookmarks."""
+    from src.services import session
+
+    current = get_language()
+    choice = st.segmented_control(
+        "Language", list(LANGUAGES), default=current, format_func=LANGUAGES.get,
+        key=f"{key}_{current}", label_visibility="collapsed",
+    )
+    if choice and choice != current:
+        session.set_language(choice)
+        st.rerun()
+
+
+# ---------------------------------------------------------------- multi-choice (stays open)
+def multi_choice(title: str, options: list[str], default: list[str] | None, key: str, kind: str | None = None,
+                 max_selections: int | None = None, help: str | None = None,
+                 format_func: Callable[[str], str] | None = None) -> list[str]:
+    """Tap-to-toggle chips instead of a dropdown: pick several options without reopening anything."""
+    fmt = format_func or ((lambda v: label(kind, v)) if kind else str)
+    default = [d for d in (default or []) if d in options]
+    selected = list(st.pills(title, options, selection_mode="multi", default=default, key=key,
+                             format_func=fmt, help=help) or [])
+    if max_selections and len(selected) > max_selections:
+        st.caption(_("Only the first {n} are kept.", n=max_selections))
+        selected = selected[:max_selections]
+    return selected
+
+
+def color_multi_choice(title: str, default_hexes: list[str], key: str, max_selections: int | None = None) -> list[str]:
+    """Pick several library colors (chips grouped in an always-open panel). Returns hex values."""
+    hexes = [c.hex for c in COLOR_LIBRARY]
+    by_hex = {c.hex: c for c in COLOR_LIBRARY}
+    from src.core.color_library import nearest_color
+
+    default = list(dict.fromkeys(h if h in by_hex else nearest_color(h).hex for h in default_hexes))
+    with st.expander(title, expanded=bool(default), key=f"{key}_panel"):
+        selected = list(st.pills(title, hexes, selection_mode="multi", default=default, key=key,
+                                 format_func=lambda h: label("color", by_hex[h].name),
+                                 label_visibility="collapsed") or [])
+    if max_selections and len(selected) > max_selections:
+        st.caption(_("Only the first {n} are kept.", n=max_selections))
+        selected = selected[:max_selections]
+    if selected:
+        chips(selected)
+    return selected
+
+
 # ---------------------------------------------------------------- color input
-LIBRARY_OPTIONS = [f"{c.name} · {c.hex}" for c in COLOR_LIBRARY]
+def _library_option(c) -> str:
+    return f"{label('color', c.name)} · {c.hex}"
 
 
-def color_input(label: str, key: str, default: str = "#B77E79", help: str | None = None) -> str:
+def color_input(title: str, key: str, default: str = "#B77E79", help: str | None = None) -> str:
     """Pick from the named library or a free color picker. Returns a hex."""
-    mode_key = f"{key}_mode"
-    mode = st.radio(label, ["Library", "Custom"], horizontal=True, key=mode_key, help=help)
+    mode = st.radio(title, ["Library", "Custom"], horizontal=True, key=f"{key}_mode", help=help, format_func=_)
     if mode == "Library":
-        idx = next((i for i, c in enumerate(COLOR_LIBRARY) if c.hex == normalize_hex(default)), None)
-        if idx is None:
-            near = color_name(default)
-            idx = next(i for i, c in enumerate(COLOR_LIBRARY) if c.name == near)
-        choice = st.selectbox(f"{label} (library)", LIBRARY_OPTIONS, index=idx, key=f"{key}_lib",
-                              label_visibility="collapsed")
-        return choice.split("·")[-1].strip()
-    return normalize_hex(st.color_picker(f"{label} (custom)", normalize_hex(default), key=f"{key}_pick",
+        hexes = [c.hex for c in COLOR_LIBRARY]
+        target = normalize_hex(default)
+        if target not in hexes:
+            from src.core.color_library import nearest_color
+
+            target = nearest_color(target).hex
+        by_hex = {c.hex: c for c in COLOR_LIBRARY}
+        return st.selectbox(f"{title} ({_('library')})", hexes, index=hexes.index(target), key=f"{key}_lib",
+                            format_func=lambda h: _library_option(by_hex[h]), label_visibility="collapsed")
+    return normalize_hex(st.color_picker(f"{title} ({_('custom')})", normalize_hex(default), key=f"{key}_pick",
                                          label_visibility="collapsed"))
 
 
@@ -133,26 +185,27 @@ def item_picture(item: WardrobeItem, source: Any | None, width: str | int = "str
 
 def item_caption(item: WardrobeItem) -> str:
     fav = "♥ " if item.favorite else ""
-    return f"{fav}**{esc(item.name)}**  \n{CATEGORY_LABELS[item.category]}" + (f" · {esc(item.subcategory)}" if item.subcategory else "")
+    sub = f" · {esc(label('subcategory', item.subcategory))}" if item.subcategory else ""
+    return f"{fav}**{esc(item.name)}**  \n{esc(label('category', item.category))}{sub}"
 
 
 # ---------------------------------------------------------------- error handling
 def show_backend_error(exc: Exception) -> None:
     if isinstance(exc, BackendUnavailable):
-        st.error(f"☁️ {exc}")
-        if st.button("Retry", key=f"retry_{id(exc)}"):
+        st.error(f"☁️ {_(str(exc))}")
+        if st.button(_("Retry"), key=f"retry_{id(exc)}"):
             st.rerun()
     elif isinstance(exc, NotAuthorized):
         from src.services import session
 
-        st.warning(str(exc))
+        st.warning(_(str(exc)))
         session.set_session(None)
-        if st.button("Sign in again"):
+        if st.button(_("Sign in again")):
             st.rerun()
     elif isinstance(exc, NotFound):
-        st.warning("That record no longer exists. It may have been deleted.")
+        st.warning(_("That record no longer exists. It may have been deleted."))
     else:
-        st.error(f"Something went wrong: {exc}")
+        st.error(_("Something went wrong: {error}", error=exc))
 
 
 def guarded(fn: Callable[..., Any]) -> Callable[..., Any]:

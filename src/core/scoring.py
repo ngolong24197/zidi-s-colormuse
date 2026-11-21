@@ -16,6 +16,7 @@ from functools import lru_cache
 from src.core.color_convert import chroma, color_distance, hex_to_hsl, hue_difference, lightness, normalize_hex
 from src.core.color_library import color_name, is_neutral_hex, nearest_color, undertone_of
 from src.core.harmony import RULE_DESCRIPTIONS, classify_relation
+from src.i18n import _, cname, label
 from src.models.domain import DEFAULT_WEIGHTS, UserPreferences
 
 
@@ -101,11 +102,12 @@ def occasion_fit(hex_value: str, occasion: str | None) -> tuple[float, str]:
         return 0.75, ""
     p = OCCASION_PROFILES[occasion]
     s = profile_fit(hex_value, p)
-    name = color_name(hex_value)
+    name, occ, summary = cname(hex_value), label("occasion", occasion).lower(), _(p.summary)
     if nearest_color(hex_value).name in p.avoid_names:
-        return s, f"{name} is best avoided for {occasion} ({p.summary})."
-    verdict = "ideal" if s >= 0.8 else "a good fit" if s >= 0.6 else "a bolder choice"
-    return s, f"For {occasion}, {name} is {verdict} — the occasion favours {p.summary}."
+        return s, _("{name} is best avoided for {occasion} ({summary}).", name=name, occasion=occ, summary=summary)
+    verdict = _("ideal") if s >= 0.8 else _("a good fit") if s >= 0.6 else _("a bolder choice")
+    return s, _("For {occasion}, {name} is {verdict} — the occasion favours {summary}.",
+                occasion=occ, name=name, verdict=verdict, summary=summary)
 
 
 def style_fit(hex_value: str, style: str | None) -> tuple[float, str]:
@@ -113,8 +115,9 @@ def style_fit(hex_value: str, style: str | None) -> tuple[float, str]:
         return 0.75, ""
     p = STYLE_PROFILES[style]
     s = profile_fit(hex_value, p)
-    verdict = "signature" if s >= 0.8 else "compatible" if s >= 0.6 else "an unexpected twist"
-    return s, f"In a {style} look ({p.summary}), {color_name(hex_value)} is {verdict}."
+    verdict = _("signature") if s >= 0.8 else _("compatible") if s >= 0.6 else _("an unexpected twist")
+    return s, _("In a {style} look ({summary}), {name} is {verdict}.", style=label("style", style).lower(),
+                summary=_(p.summary), name=cname(hex_value), verdict=verdict)
 
 
 def preference_fit(hex_value: str, prefs: UserPreferences | None) -> tuple[float, str]:
@@ -134,9 +137,9 @@ def preference_fit(hex_value: str, prefs: UserPreferences | None) -> tuple[float
     dis, dis_hex = closeness(prefs.disliked_colors)
     score = max(0.0, min(1.0, 0.6 + 0.4 * fav - 0.6 * dis))
     if dis >= 0.5 and dis_hex:
-        return score, f"Close to {color_name(dis_hex)}, which you prefer to avoid."
+        return score, _("Close to {name}, which you prefer to avoid.", name=cname(dis_hex))
     if fav >= 0.5 and fav_hex:
-        return score, f"Echoes one of your favourite colors ({color_name(fav_hex)})."
+        return score, _("Echoes one of your favourite colors ({name}).", name=cname(fav_hex))
     return score, ""
 
 
@@ -147,19 +150,19 @@ def contrast_balance(hex1: str, hex2: str) -> tuple[float, str]:
     dl = abs(l1 - l2)
     if dl < 8:
         lc = 0.55 + 0.35 * (dl / 8)
-        msg = "Very similar depth — a soft, tonal effect."
+        msg = _("Very similar depth — a soft, tonal effect.")
     elif dl <= 55:
         lc = 0.9 + 0.1 * _bell(dl, 32, 20)
-        msg = "Comfortable light-to-dark contrast keeps the look balanced."
+        msg = _("Comfortable light-to-dark contrast keeps the look balanced.")
     else:
         lc = 0.82
-        msg = "Strong light/dark contrast — crisp and graphic."
+        msg = _("Strong light/dark contrast — crisp and graphic.")
     both_loud = c1 > 55 and c2 > 55
     if both_loud:
         rel = classify_relation(hex1, hex2)
         if rel.rule not in ("monochromatic", "analogous"):
             lc *= 0.75
-            msg += " Both colors are intense, so let one lead and keep the rest quiet."
+            msg += " " + _("Both colors are intense, so let one lead and keep the rest quiet.")
     return max(0.0, min(1.0, lc)), msg
 
 
@@ -209,7 +212,7 @@ def category_fit(hex_value: str, category: str) -> tuple[float, str]:
     rules = _CATEGORY_RULES.get(category, _CATEGORY_RULES["tops"])
     kind = color_kind(hex_value)
     notes = _CATEGORY_NOTES[kind]
-    return rules[kind], notes.get(category, notes["default"])
+    return rules[kind], _(notes.get(category, notes["default"]))
 
 
 # ---------------------------------------------------------------- results
@@ -253,26 +256,27 @@ def score_pair(
     base_hex, candidate_hex = normalize_hex(base_hex), normalize_hex(candidate_hex)
     rel = classify_relation(base_hex, candidate_hex)
     harmony = rel.quality
-    cand_name, base_name = color_name(candidate_hex), color_name(base_hex)
+    cand_name, base_name = cname(candidate_hex), cname(base_hex)
     if rel.rule == "neutral":
-        harmony_msg = f"{cand_name} and {base_name}: a neutral pairing — {RULE_DESCRIPTIONS['neutral'].lower()}"
+        desc = _(RULE_DESCRIPTIONS["neutral"])
+        harmony_msg = _("{a} and {b}: a neutral pairing — {desc}", a=cand_name, b=base_name,
+                        desc=desc[:1].lower() + desc[1:])
     else:
-        harmony_msg = (
-            f"{rel.rule.capitalize()}: {cand_name} and {base_name} sit {rel.hue_angle:.0f}° apart on the "
-            f"color wheel. {RULE_DESCRIPTIONS[rel.rule]}"
-        )
+        harmony_msg = _("{rule}: {a} and {b} sit {angle}° apart on the color wheel. {desc}",
+                        rule=label("rule", rel.rule), a=cand_name, b=base_name,
+                        angle=f"{rel.hue_angle:.0f}", desc=_(RULE_DESCRIPTIONS[rel.rule]))
     # Echoing a secondary color of a printed base ties the outfit together
     for sec in base_secondary or []:
         if color_distance(sec, candidate_hex) < 12:
             harmony = min(1.0, harmony + 0.08)
-            harmony_msg += f" It also picks up the {color_name(sec)} in your piece."
+            harmony_msg += " " + _("It also picks up the {name} in your piece.", name=cname(sec))
             break
 
     contrast, contrast_msg = contrast_balance(base_hex, candidate_hex)
     category, category_msg = category_fit(candidate_hex, candidate_category)
     if base_pattern != "solid" and candidate_pattern != "solid":
         category *= 0.7
-        category_msg += " Two patterns compete — keep this piece solid."
+        category_msg += " " + _("Two patterns compete — keep this piece solid.")
     occ, occ_msg = occasion_fit(candidate_hex, occasion)
     sty, sty_msg = style_fit(candidate_hex, style)
     pref, pref_msg = preference_fit(candidate_hex, prefs)

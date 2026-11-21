@@ -17,6 +17,7 @@ from typing import Any
 
 from src.config import Settings
 from src.database.base import BackendUnavailable, Repository
+from src.i18n import _
 
 MAX_ATTEMPTS = 5
 LOCKOUT_SECONDS = 60
@@ -43,7 +44,7 @@ class Throttle:
         self.failures = [t for t in self.failures if now - t < LOCKOUT_SECONDS]
         if len(self.failures) >= MAX_ATTEMPTS:
             wait = int(LOCKOUT_SECONDS - (now - self.failures[0])) + 1
-            raise AuthError(f"Too many attempts. Please wait {wait} seconds and try again.")
+            raise AuthError(_("Too many attempts. Please wait {wait} seconds and try again.", wait=wait))
 
     def fail(self, now: float | None = None) -> None:
         self.failures.append(now or time.time())
@@ -62,17 +63,17 @@ def sign_in(settings: Settings, email: str, password: str, throttle: Throttle, c
     throttle.check()
     email = (email or "").strip().lower()
     if not email or not password:
-        raise AuthError("Please enter your email and password.")
+        raise AuthError(_("Please enter your email and password."))
     if settings.owner_email and not hmac.compare_digest(email, settings.owner_email):
         throttle.fail()
-        raise AuthError("Incorrect email or password.")
+        raise AuthError(_("Incorrect email or password."))
 
     if settings.backend == "local":
         from src.database.local_repo import LocalRepository
 
         if not settings.local_password or not hmac.compare_digest(password.encode(), settings.local_password.encode()):
             throttle.fail()
-            raise AuthError("Incorrect email or password.")
+            raise AuthError(_("Incorrect email or password."))
         throttle.reset()
         return Session("local-owner", email, LocalRepository(settings.local_dir, "local-owner"))
 
@@ -85,10 +86,10 @@ def sign_in(settings: Settings, email: str, password: str, throttle: Throttle, c
     except Exception as exc:  # noqa: BLE001
         name = type(exc).__name__
         if name in {"ConnectError", "ConnectTimeout", "ReadTimeout", "TimeoutException"}:
-            raise BackendUnavailable("Can't reach the sign-in service. Check your connection or restore the "
-                                     "Supabase project if it was paused.") from exc
+            raise BackendUnavailable(_("Can't reach the sign-in service. Check your connection or restore the "
+                                       "Supabase project if it was paused.")) from exc
         throttle.fail()
-        raise AuthError("Incorrect email or password.") from exc
+        raise AuthError(_("Incorrect email or password.")) from exc
     user = getattr(resp, "user", None)
     if user is None or (settings.owner_email and (getattr(user, "email", "") or "").lower() != settings.owner_email):
         throttle.fail()
@@ -96,7 +97,7 @@ def sign_in(settings: Settings, email: str, password: str, throttle: Throttle, c
             client.auth.sign_out()
         except Exception:  # noqa: BLE001
             pass
-        raise AuthError("This account is not allowed to use ColorMuse.")
+        raise AuthError(_("This account is not allowed to use ColorMuse."))
     throttle.reset()
     session = getattr(resp, "session", None)
 
@@ -125,10 +126,10 @@ def sign_out(session: Session | None) -> None:
 
 def change_password(session: Session, new_password: str) -> None:
     if len(new_password) < 10:
-        raise AuthError("Use at least 10 characters.")
+        raise AuthError(_("Use at least 10 characters."))
     if session.client is None:
-        raise AuthError("In local development mode the password comes from COLORMUSE_LOCAL_PASSWORD.")
+        raise AuthError(_("In local development mode the password comes from COLORMUSE_LOCAL_PASSWORD."))
     try:
         session.client.auth.update_user({"password": new_password})
     except Exception as exc:  # noqa: BLE001
-        raise AuthError(f"Could not change the password: {exc}") from exc
+        raise AuthError(_("Could not change the password: {error}", error=exc)) from exc

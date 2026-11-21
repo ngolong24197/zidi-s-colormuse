@@ -33,4 +33,10 @@ production; a local SQLite backend exists **only** for development and tests.
 - New garment shapes: add to `scripts/build_svg_assets.py`, map in `SUBCATEGORIES` (domain), regenerate.
 - Don't commit secrets, `.env`, `.streamlit/secrets.toml` or `.colormuse_local/`.
 - Art style for generated illustrations: "elegant watercolor fashion editorial illustration, soft blush and ivory palette".
+- **Bilingual (English / Tiếng Việt).** Wrap every user-visible string in `_("English text")` (or `N_()`
+  when translated later via a variable); vocabulary values go through `label(kind, value)`, colors through
+  `cname(hex)`. Add the Vietnamese to `src/i18n_vi.py` — `tests/test_i18n.py` fails on any missing entry.
+  Never use `_` as a throwaway variable in modules that import it.
+- Multi-select UI: use `ui.multi_choice` / `ui.color_multi_choice` (chips that stay open), not `st.multiselect`;
+  give expanders whose title changes a stable `key=` so they don't collapse.
 - Update `docs/DEVELOPMENT_LOG.md` when finishing a stage.

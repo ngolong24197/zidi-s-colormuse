@@ -20,6 +20,10 @@ from tests.fakes import FakeClient, FakeDB, FakeUser, seeded_colors  # noqa: E40
 def _isolate_from_real_config(monkeypatch):
     """Never let the developer's real .env (e.g. Supabase keys) influence tests."""
     monkeypatch.setenv("COLORMUSE_DOTENV", "none")
+    monkeypatch.delenv("COLORMUSE_LANGUAGE", raising=False)
+    from src import i18n
+
+    i18n.set_language("en")
 
 
 @pytest.fixture

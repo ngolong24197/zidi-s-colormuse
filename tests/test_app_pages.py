@@ -69,6 +69,25 @@ def test_every_page_runs(env, page):
     assert not at.exception, at.exception
 
 
+@pytest.mark.parametrize("page", PAGES)
+def test_every_page_runs_in_vietnamese(env, page, monkeypatch):
+    monkeypatch.setenv("COLORMUSE_LANGUAGE", "vi")
+    at = AppTest.from_file(str(ROOT / "app.py"), default_timeout=60)
+    at.run()
+    assert not at.exception
+    assert any(b.label == "Đăng nhập" for b in at.button)
+    at.text_input[0].input("zidi@example.com")
+    at.text_input[1].input("demo-pass-123")
+    next(b for b in at.button if b.label == "Đăng nhập").click()
+    at.run()
+    assert not at.exception, at.exception
+    at.switch_page(page)
+    at.run()
+    assert not at.exception, at.exception
+    texts = " ".join(m.value for m in at.markdown)
+    assert "ColorMuse" in texts
+
+
 def test_planner_save_and_saved_looks(env):
     at = _signed_in(env)
     at.switch_page("pages/occasion_planner.py")

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from src.core.outfit_engine import OutfitContext, finish_beauty
 from src.core.recommender import MatchRequest, Recommendation
+from src.i18n import _, label
 from src.models.domain import (
     CATEGORY_TO_SLOT,
     DEFAULT_VARIANT,
@@ -38,7 +39,7 @@ def outfit_from_match(
     prefs: UserPreferences | None = None,
 ) -> Outfit:
     owned = owned or {}
-    o = Outfit(name="Matched look", occasion=req.occasion, style=req.style)
+    o = Outfit(name=_("Matched look"), occasion=req.occasion, style=req.style)
     if prefs:
         o.skin_tone, o.hair_color, o.hair_style = prefs.skin_tone, prefs.hair_color, prefs.hair_style
     if base_item is not None:
@@ -48,7 +49,7 @@ def outfit_from_match(
         base_slot = CATEGORY_TO_SLOT.get(req.base_category, "top")
         o.set_item(OutfitItem(slot=base_slot, color_hex=req.base_hex, pattern=req.pattern,
                               secondary_hex=req.secondary[0] if req.secondary else None,
-                              variant=DEFAULT_VARIANT.get(req.base_category), label="Your piece"))
+                              variant=DEFAULT_VARIANT.get(req.base_category), label=_("Your piece")))
     for cat in _COMPLETE.get(base_slot, ("shoes", "handbags", "jewelry")):
         slot, variant = REC_TO_SLOT[cat]
         if o.get(slot) is not None:
@@ -58,6 +59,6 @@ def outfit_from_match(
             o.set_item(OutfitItem.from_wardrobe(mine[0].wardrobe_item))
         elif results.get(cat):
             r = results[cat][0]
-            o.set_item(OutfitItem(slot=slot, color_hex=r.hex, variant=variant, label=r.name))
+            o.set_item(OutfitItem(slot=slot, color_hex=r.hex, variant=variant, label=label("color", r.name)))
     finish_beauty(o, OutfitContext(req.occasion, req.style, None, prefs))
     return o

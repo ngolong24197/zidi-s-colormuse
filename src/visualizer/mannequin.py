@@ -139,7 +139,9 @@ def render_image(outfit: Outfit, height: int = 900, supersample: int = 2, backgr
 def render_png(outfit: Outfit, height: int = 900) -> bytes:
     from src.visualizer.export import poster
 
-    img = poster(outfit, render_image(outfit, height), subtitle="Mannequin view")
+    from src.i18n import _
+
+    img = poster(outfit, render_image(outfit, height), subtitle=_("Mannequin view"))
     buf = io.BytesIO()
     img.save(buf, format="PNG", optimize=True)
     return buf.getvalue()

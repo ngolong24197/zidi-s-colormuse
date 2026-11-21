@@ -64,6 +64,21 @@ owner user, create the Streamlit app and paste secrets, then verify the live app
 - Still to do: deploy on Streamlit Community Cloud with the same secrets; browser tests against
   the Supabase-backed app (needs permission to start Streamlit locally).
 
+## 2026-11-22 — Vietnamese language + multi-choice usability
+- **Tiếng Việt** throughout: all pages, the stylist's explanations (engine sentences are templates),
+  garment/occasion/style/hair/nail names, all 97 color names, error messages and PNG exports.
+  Switch in the top bar or on the sign-in page; remembered for the session and in the URL (`?lang=vi`);
+  default via optional `COLORMUSE_LANGUAGE`. No database change. `src/i18n.py` + `src/i18n_vi.py`.
+- Fonts: web body font changed from Jost to **Be Vietnam Pro** (Jost lacks Vietnamese stacked diacritics);
+  Vietnamese PNG exports use the bundled Cormorant Garamond (glyph coverage tested).
+- **Dropdowns that closed after each pick:** Outfit Studio piece panels now have stable keys (their title
+  shows the current choice, which used to recreate and collapse them); seasons/styles/occasions/collections
+  use tap-to-toggle chips; color lists use chips in a panel that stays open, with a preview.
+- Fixed a latent bug found by the new tests: `_` used as a throwaway variable shadowed the translator.
+- Tests: `tests/test_i18n.py` (completeness, placeholders, every vocabulary value, Vietnamese engine
+  output, Vietnamese PNG glyphs, fonts) and every page via AppTest in Vietnamese. 184 passed.
+  Browser (Playwright) run not repeated this round (starting the app needed approval).
+
 ### Known limitations / next ideas
 - Background reduction is heuristic, not segmentation; manual crop and color correction remain available.
 - No drag-and-drop in the studio (by design).
