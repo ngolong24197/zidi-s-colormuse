@@ -31,6 +31,11 @@ def main() -> None:
     out = ROOT / "database" / "seed_colors.sql"
     out.write_text(render(), encoding="utf-8")
     print(f"wrote {len(COLOR_LIBRARY)} colors to {out.relative_to(ROOT)}")
+    # one-paste setup file for the Supabase SQL editor: schema + storage + seed
+    db = ROOT / "database"
+    combined = "".join((db / f).read_text(encoding="utf-8") for f in ("schema.sql", "storage.sql", "seed_colors.sql"))
+    (db / "setup_all.sql").write_text(combined, encoding="utf-8")
+    print("wrote database/setup_all.sql")
 
 
 if __name__ == "__main__":
