@@ -55,6 +55,15 @@ Repository prepared for Streamlit Community Cloud (requirements, config, secrets
 owner user, create the Streamlit app and paste secrets, then verify the live app
 (docs/DEPLOYMENT.md §3).
 
+## 2026-11-21 — Connected to the owner's Supabase project
+- Owner added `.env` with the project URL, anon key, owner email and a test password.
+- Fixed test isolation: the suite now ignores the real `.env` (`COLORMUSE_DOTENV=none`).
+- Schema created via `database/setup_all.sql`; public sign-ups disabled.
+- `scripts/check_supabase.py` against the real project: all 9 tables, 97 colors, owner sign-in,
+  storage, and a full write → fresh-session read-back → cleanup round-trip all passed.
+- Still to do: deploy on Streamlit Community Cloud with the same secrets; browser tests against
+  the Supabase-backed app (needs permission to start Streamlit locally).
+
 ### Known limitations / next ideas
 - Background reduction is heuristic, not segmentation; manual crop and color correction remain available.
 - No drag-and-drop in the studio (by design).

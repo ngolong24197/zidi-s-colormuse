@@ -31,6 +31,12 @@ Cloud account (sign in with GitHub).
 5. Recommended: App settings → **Sharing** → "Only specific people can view this app" and add
    the owner's email, for a second lock in front of the app's own sign-in.
 
+## 2b. Check the Supabase setup from your computer
+With the keys in `.env` (plus `COLORMUSE_E2E_PASSWORD` = the owner's password):
+`python scripts/check_supabase.py` → verifies keys, sign-ups disabled, owner sign-in, all tables,
+color seed, storage, and a write → new-session read-back → cleanup round-trip (piece + photo +
+look with nails/hair + collection). It never prints secrets and removes its own test data.
+
 ## 3. Verify the live app
 - Open the URL on a phone and a computer → Sign in with the owner account.
 - Add a piece with a photo → it appears with its thumbnail → reload the browser, sign in again →
