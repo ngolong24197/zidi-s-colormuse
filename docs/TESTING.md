@@ -32,6 +32,10 @@ COLORMUSE_E2E_URL=http://localhost:8599 pytest tests/e2e
 ```
 Screenshots: `tests/_artifacts/screens/` (git-ignored).
 
+Vietnamese browser checks (all pages on desktop + mobile, Studio panel stays open while editing,
+several chips selectable without reopening): start the app the same way but with
+`COLORMUSE_LANGUAGE=vi`, then `pytest tests/e2e/test_browser_vi.py --e2e-url=http://localhost:8599`.
+
 ## Without AI
 The whole suite runs with no AI package installed and no API key; `test_backup_and_policy.py`
 fails if one is ever added.

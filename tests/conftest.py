@@ -16,6 +16,10 @@ from src.database.supabase_repo import SupabaseRepository  # noqa: E402
 from tests.fakes import FakeClient, FakeDB, FakeUser, seeded_colors  # noqa: E402
 
 
+def pytest_addoption(parser):
+    parser.addoption("--e2e-url", default=None, help="URL of a running ColorMuse (local mode) for browser tests")
+
+
 @pytest.fixture(autouse=True)
 def _isolate_from_real_config(monkeypatch):
     """Never let the developer's real .env (e.g. Supabase keys) influence tests."""

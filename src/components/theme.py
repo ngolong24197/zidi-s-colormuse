@@ -16,7 +16,7 @@ CSS = """
   --cm-taupe:#C8AD91; --cm-charcoal:#302B2B; --cm-card:#FFFDFB; --cm-line:#E9DBD3;
 }
 /* page width & breathing room */
-.block-container { padding-top: 1.2rem; padding-bottom: 4rem; max-width: 1180px; }
+.block-container { padding-top: 3.6rem; padding-bottom: 4rem; max-width: 1180px; }  /* clear the fixed top nav */
 h1, h2, h3 { letter-spacing: .01em; color: var(--cm-burgundy) !important; }
 h1 { font-weight: 600 !important; }
 p, li, label, .stMarkdown { line-height: 1.6; }

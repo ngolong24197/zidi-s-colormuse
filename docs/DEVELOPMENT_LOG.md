@@ -77,7 +77,9 @@ owner user, create the Streamlit app and paste secrets, then verify the live app
 - Fixed a latent bug found by the new tests: `_` used as a throwaway variable shadowed the translator.
 - Tests: `tests/test_i18n.py` (completeness, placeholders, every vocabulary value, Vietnamese engine
   output, Vietnamese PNG glyphs, fonts) and every page via AppTest in Vietnamese. 184 passed.
-  Browser (Playwright) run not repeated this round (starting the app needed approval).
+- Browser check in Vietnamese (`tests/e2e/test_browser_vi.py`, Chromium, desktop + mobile): all pages,
+  Studio panel stays open across reruns, multiple chips selectable — 4/4 passed. Fixed two layout issues it
+  revealed: the top row (language switch) hid under the fixed nav bar on desktop, and the switch was clipped.
 
 ### Known limitations / next ideas
 - Background reduction is heuristic, not segmentation; manual crop and color correction remain available.

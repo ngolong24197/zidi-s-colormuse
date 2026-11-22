@@ -44,7 +44,7 @@ def setup_page() -> None:
 
 
 def login_page() -> None:
-    _l, right_top = st.columns([4, 1])
+    _l, right_top = st.columns([3.4, 1.6])
     with right_top:
         ui.language_switcher("login_lang")
     left, right = st.columns([1.15, 1], gap="large")
@@ -90,7 +90,7 @@ def main() -> None:
         st.Page("pages/settings.py", title=_("Settings"), icon=":material/settings:"),
     ]
     nav = st.navigation(pages, position="top")
-    top_l, top_r = st.columns([5, 1])
+    top_l, top_r = st.columns([3.4, 1.6], vertical_alignment="center")
     with top_l:
         if session.settings().backend == "local":
             st.caption("🧪 " + _("Local development mode — data stays on this computer (not for the hosted app)."))
