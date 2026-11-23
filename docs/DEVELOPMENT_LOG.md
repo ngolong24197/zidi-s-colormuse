@@ -81,6 +81,23 @@ owner user, create the Streamlit app and paste secrets, then verify the live app
   Studio panel stays open across reruns, multiple chips selectable — 4/4 passed. Fixed two layout issues it
   revealed: the top row (language switch) hid under the fixed nav bar on desktop, and the switch was clipped.
 
+## 2026-11-24 — Camera scan + phone companion app
+- `src/services/scan.py`: one snapshot → centre-of-frame color extraction (background reduction) →
+  quick recommendations, owned matches, "already own something similar" (ΔE < 9), nail colors;
+  `save_to_wardrobe` creates the piece and uploads the cropped, compressed photo.
+- `src/components/scanner.py`: category chips → `st.camera_input` (one tap, no file upload) → results →
+  optional color correction → **"Add this piece to your wardrobe?"** (pre-filled name/type/pattern) →
+  scan another / build an outfit with it.
+- Main app: new **Scan** page (`/scan`) and a "Scan a piece with the camera" button on Home.
+- `companion.py`: standalone phone-first app (sign-in + scanner + language + sign-out), deployable as a
+  second Streamlit Cloud app with the same secrets. Sign-in screens moved to `src/components/auth_pages.py`.
+- Design note: Streamlit's camera takes snapshots; continuous live video analysis would need an extra
+  WebRTC component that is unreliable on Streamlit Community Cloud, so the scan is one tap per piece.
+- Tests: `tests/test_scan.py` (8, both repositories), companion AppTests (en/vi, wrong password),
+  Scan page in every-page AppTests, and a real-browser camera test with Chromium's fake webcam
+  (`tests/e2e/test_scan_camera.py`) — shutter → "Xanh xô thơm" detected → saved. 197 passed.
+- Known: the camera widget's own buttons ("Take Photo", "Clear photo") are Streamlit's and stay in English.
+
 ### Known limitations / next ideas
 - Background reduction is heuristic, not segmentation; manual crop and color correction remain available.
 - No drag-and-drop in the studio (by design).

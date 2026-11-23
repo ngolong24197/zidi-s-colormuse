@@ -9,7 +9,7 @@ from streamlit.testing.v1 import AppTest
 
 ROOT = Path(__file__).resolve().parents[1]
 
-PAGES = ["pages/home.py", "pages/color_matcher.py", "pages/wardrobe.py", "pages/outfit_studio.py",
+PAGES = ["pages/home.py", "pages/quick_scan.py", "pages/color_matcher.py", "pages/wardrobe.py", "pages/outfit_studio.py",
          "pages/occasion_planner.py", "pages/saved_looks.py", "pages/settings.py"]
 
 
@@ -86,6 +86,32 @@ def test_every_page_runs_in_vietnamese(env, page, monkeypatch):
     assert not at.exception, at.exception
     texts = " ".join(m.value for m in at.markdown)
     assert "ColorMuse" in texts
+
+
+@pytest.mark.parametrize("lang,button", [("en", "Sign in"), ("vi", "Đăng nhập")])
+def test_companion_app_sign_in_and_scanner(env, monkeypatch, lang, button):
+    monkeypatch.setenv("COLORMUSE_LANGUAGE", lang)
+    at = AppTest.from_file(str(ROOT / "companion.py"), default_timeout=60)
+    at.run()
+    assert not at.exception
+    at.text_input[0].input("zidi@example.com")
+    at.text_input[1].input("demo-pass-123")
+    next(b for b in at.button if b.label == button).click()
+    at.run()
+    assert not at.exception, at.exception
+    texts = " ".join(m.value for m in at.markdown)
+    assert ("Scan a piece" if lang == "en" else "Quét món đồ") in texts
+    assert any(b.label in ("Sign out", "Đăng xuất") for b in at.button)
+
+
+def test_companion_rejects_wrong_password(env):
+    at = AppTest.from_file(str(ROOT / "companion.py"), default_timeout=60)
+    at.run()
+    at.text_input[0].input("zidi@example.com")
+    at.text_input[1].input("nope")
+    next(b for b in at.button if b.label == "Sign in").click()
+    at.run()
+    assert any("Incorrect" in e.value for e in at.error)
 
 
 def test_planner_save_and_saved_looks(env):

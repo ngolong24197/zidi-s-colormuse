@@ -33,7 +33,7 @@ from src.models.domain import (
 from src.visualizer.flatlay import LAYOUTS
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCES = [ROOT / "app.py", *sorted((ROOT / "pages").glob("*.py")), *sorted((ROOT / "src").rglob("*.py"))]
+SOURCES = [ROOT / "app.py", ROOT / "companion.py", *sorted((ROOT / "pages").glob("*.py")), *sorted((ROOT / "src").rglob("*.py"))]
 
 # Strings translated through a variable (options shown with format_func=_, "none" texts,
 # exception messages raised elsewhere and shown via _(str(exc))).

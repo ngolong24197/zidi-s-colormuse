@@ -358,6 +358,31 @@ VI: dict[str, str] = {
     "Deleting…": "Đang xóa…",
     "All personal data has been deleted.": "Đã xóa toàn bộ dữ liệu cá nhân.",
 
+    # ------------------------------------------------------------ camera scan / companion
+    "Scan": "Quét màu",
+    "Scan a piece with the camera": "Quét món đồ bằng camera",
+    "Scan a piece": "Quét món đồ",
+    "Point your camera at a piece and tap the shutter — I'll read its colors and tell you what goes with it.":
+        "Hướng camera vào món đồ và bấm chụp — mình sẽ đọc màu và gợi ý nên phối cùng gì.",
+    "What are you scanning?": "Bạn đang quét món gì?",
+    "Fill the frame with the piece, then take the photo": "Để món đồ chiếm kín khung hình rồi chụp",
+    "Tip: daylight and a plain background give the truest colors. Only the centre of the photo is read.":
+        "Mẹo: ánh sáng ban ngày và nền trơn cho màu chuẩn nhất. Chỉ phần giữa ảnh được đọc màu.",
+    "Reading the colors…": "Đang đọc màu…",
+    "The framed area is what I read": "Vùng trong khung là phần được đọc màu",
+    "This piece is": "Món đồ này màu",
+    "Not quite right? Correct the main color": "Chưa đúng lắm? Chỉnh lại màu chính",
+    "You already own something very similar: {names}": "Bạn đã có món rất giống rồi: {names}",
+    "Wear it with": "Phối cùng",
+    "In your wardrobe": "Trong tủ đồ của bạn",
+    "Saved to your wardrobe ✓": "Đã lưu vào tủ đồ ✓",
+    "Scan another piece": "Quét món khác",
+    "Build an outfit with it": "Phối bộ đồ với món này",
+    "Add this piece to your wardrobe?": "Thêm món này vào tủ đồ?",
+    "Save to my wardrobe": "Lưu vào tủ đồ",
+    "Not now": "Để sau",
+    "Point, tap, and know what to wear with it.": "Hướng camera, bấm chụp, biết ngay nên mặc cùng gì.",
+
     # ------------------------------------------------------------ errors & services
     "Retry": "Thử lại",
     "Sign in again": "Đăng nhập lại",

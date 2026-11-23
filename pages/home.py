@@ -35,8 +35,10 @@ def render() -> None:
     with hero_l:
         ui.header(_("Hello, {name}", name=name),
                   _("Your personal wardrobe. Your personal stylist. What are we wearing today?"), "ColorMuse")
+        if st.button("📷 " + _("Scan a piece with the camera"), width="stretch", type="primary"):
+            go("pages/quick_scan.py")
         a, b = st.columns(2)
-        if a.button("✨ " + _("Match a color"), width="stretch", type="primary"):
+        if a.button("✨ " + _("Match a color"), width="stretch"):
             go("pages/color_matcher.py")
         if b.button("👗 " + _("Add a piece"), width="stretch"):
             go("pages/wardrobe.py", wardrobe_mode="add")

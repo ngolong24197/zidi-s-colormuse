@@ -5,6 +5,7 @@ production; a local SQLite backend exists **only** for development and tests.
 
 ## Commands
 - Run: `streamlit run app.py` (configure `.env`; `COLORMUSE_BACKEND=local` needs `COLORMUSE_LOCAL_PASSWORD`)
+- Phone companion (camera scanner only, same data): `streamlit run companion.py`
 - Demo data (local backend only): `python scripts/seed_demo_wardrobe.py`
 - Tests: `pytest` (PostgreSQL RLS tests need Docker or `COLORMUSE_PG_DSN`)
 - Browser tests: run the app on :8599 in local mode, then `COLORMUSE_E2E_URL=http://localhost:8599 pytest tests/e2e`

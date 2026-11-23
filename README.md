@@ -21,6 +21,9 @@ polish**), plan outfits for occasions and keep a lookbook of favourite looks.
 - ⚙️ **Settings** — style & beauty preferences, favorite/avoided colors, scoring weights,
   password, backup/restore, delete all personal data.
 
+- 📷 **Scan** — point the phone camera at a piece and tap once: colors, what to wear with it, matching
+  pieces you own, "you already own something similar", and **Add to my wardrobe?** pre-filled.
+  Also available as a standalone phone companion app, `companion.py` (same data, same sign-in).
 - 🌐 **English / Tiếng Việt** — switch any time in the top bar (also translates the stylist's explanations,
   color names and PNG exports).
 

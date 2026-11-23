@@ -31,6 +31,15 @@ Cloud account (sign in with GitHub).
 5. Recommended: App settings → **Sharing** → "Only specific people can view this app" and add
    the owner's email, for a second lock in front of the app's own sign-in.
 
+## 2a. Optional: the phone companion (ColorMuse Scan)
+A second, camera-first app from the same repo — point the phone at a piece, tap once, see its colors and
+what to wear with it, and add it to the wardrobe. It shares the sign-in and Supabase data with the main app.
+1. share.streamlit.io → **Create app** → same repo and branch, main file **`companion.py`**, Python 3.12.
+2. Secrets: the same five keys as the main app.
+3. Open its URL on the phone → browser menu → **Add to Home Screen**. The browser asks for camera
+   permission the first time (Streamlit Cloud serves HTTPS, which browsers require for the camera).
+The same scanner is also built into the main app as the **Scan** page, so this step is optional.
+
 ## 2b. Check the Supabase setup from your computer
 With the keys in `.env` (plus `COLORMUSE_E2E_PASSWORD` = the owner's password):
 `python scripts/check_supabase.py` → verifies keys, sign-ups disabled, owner sign-in, all tables,
