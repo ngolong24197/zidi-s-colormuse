@@ -18,6 +18,7 @@ from tests.fakes import FakeClient, FakeDB, FakeUser, seeded_colors  # noqa: E40
 
 def pytest_addoption(parser):
     parser.addoption("--e2e-url", default=None, help="URL of a running ColorMuse (local mode) for browser tests")
+    parser.addoption("--e2e-companion-url", default=None, help="URL of a running companion.py (local mode, vi)")
 
 
 @pytest.fixture(autouse=True)

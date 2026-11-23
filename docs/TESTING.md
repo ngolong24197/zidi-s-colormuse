@@ -35,6 +35,10 @@ Screenshots: `tests/_artifacts/screens/` (git-ignored).
 Camera scan in a real browser (Chromium's fake webcam plays a generated video of a sage garment; the test
 takes the photo, checks the detected color and recommendations, and saves the piece):
 `pytest tests/e2e/test_scan_camera.py --e2e-url=http://localhost:8599` (app started with `COLORMUSE_LANGUAGE=vi`).
+Companion app in a real browser: start `streamlit run companion.py --server.port 8600` the same way
+(local mode, `COLORMUSE_LANGUAGE=vi`), then `pytest tests/e2e/test_scan_camera.py --e2e-companion-url=http://localhost:8600`
+— sign in → choose "Giày" → shutter → colors & recommendations → save → "Quét món khác" resets the camera,
+and the piece is verified in the shared wardrobe database.
 Scan logic itself: `tests/test_scan.py`; companion app sign-in/screens: `tests/test_app_pages.py`.
 
 Vietnamese browser checks (all pages on desktop + mobile, Studio panel stays open while editing,

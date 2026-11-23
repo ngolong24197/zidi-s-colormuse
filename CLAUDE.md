@@ -14,7 +14,9 @@ production; a local SQLite backend exists **only** for development and tests.
 
 ## Layout
 - `app.py` — config, sign-in gate, `st.navigation`. No feature code here.
-- `pages/` — one file per module (home, color_matcher, wardrobe, outfit_studio, occasion_planner, saved_looks, settings).
+- `pages/` — one file per module (home, quick_scan, color_matcher, wardrobe, outfit_studio, occasion_planner, saved_looks, settings).
+- `companion.py` — phone companion entry (sign-in + camera scanner only); scanner UI in `src/components/scanner.py`,
+  logic in `src/services/scan.py`, shared sign-in screens in `src/components/auth_pages.py`.
 - `src/core/` — pure, deterministic engine: color conversion, library, harmony, scoring, recommender, outfit engine, beauty (nails/hair).
 - `src/models/domain.py` — dataclasses + vocabularies shared everywhere (the single `Outfit` model drives both visualizers).
 - `src/database/` — `Repository` contract (`base.py`), `supabase_repo.py`, `local_repo.py`.

@@ -96,6 +96,9 @@ owner user, create the Streamlit app and paste secrets, then verify the live app
 - Tests: `tests/test_scan.py` (8, both repositories), companion AppTests (en/vi, wrong password),
   Scan page in every-page AppTests, and a real-browser camera test with Chromium's fake webcam
   (`tests/e2e/test_scan_camera.py`) — shutter → "Xanh xô thơm" detected → saved. 197 passed.
+- Standalone `companion.py` verified in Chromium with the fake webcam (`test_companion_app_scan_and_sync`):
+  sign-in, category chips, shutter, results, save, scan-another reset, and the saved piece present in the
+  shared wardrobe database — passed.
 - Known: the camera widget's own buttons ("Take Photo", "Clear photo") are Streamlit's and stay in English.
 
 ### Known limitations / next ideas
